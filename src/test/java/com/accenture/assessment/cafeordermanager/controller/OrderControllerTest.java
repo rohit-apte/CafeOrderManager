@@ -2,6 +2,7 @@ package com.accenture.assessment.cafeordermanager.controller;
 
 import com.accenture.assessment.cafeordermanager.exception.UserNotFoundException;
 import com.accenture.assessment.cafeordermanager.service.PaymentService;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,33 +18,63 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 class OrderControllerTest {
+  @Autowired private MockMvc mockMvc;
 
   @MockBean private PaymentService paymentService;
 
-  @Autowired private MockMvc mockMvc;
+  @Nested
+  class AmountPaid {
+    @Test
+    void givenNonExistingUsername_whenGetAmountPaidIsCalled_thenReturnNotFound() throws Exception {
+      // given
+      Mockito.when(paymentService.getAmountPaidByUsername("nonExistingUser"))
+          .thenThrow(new UserNotFoundException("nonExistingUser"));
 
-  @Test
-  void givenNonExistingUsername_whenGetAmountPaidIsCalled_thenReturnNotFound() throws Exception {
-    // given
-    Mockito.when(paymentService.getAmountPaidByUsername("nonExistingUser"))
-        .thenThrow(new UserNotFoundException("nonExistingUser"));
+      // when and then
+      mockMvc
+          .perform(get("/amount/paid/{username}", "nonExistingUser"))
+          .andExpect(status().is4xxClientError())
+          .andExpect(content().string("No user found for nonExistingUser"));
+    }
 
-    // when and then
-    mockMvc
-        .perform(get("/amount/paid/{username}", "nonExistingUser"))
-        .andExpect(status().is4xxClientError())
-        .andExpect(content().string("No user found for nonExistingUser"));
+    @Test
+    void givenAnExistingUsername_whenGetAmountPaidIsCalled_thenAmountIsReturned() throws Exception {
+      // given
+      Mockito.when(paymentService.getAmountPaidByUsername("TestUser")).thenReturn("10.0");
+
+      // when and then
+      mockMvc
+          .perform(get("/amount/paid/{username}", "TestUser"))
+          .andExpect(status().is2xxSuccessful())
+          .andExpect(content().string("10.0"));
+    }
   }
 
-  @Test
-  void givenAnExistingUsername_whenGetAmountPaidIsCalled_thenAmountIsReturned() throws Exception {
-    // given
-    Mockito.when(paymentService.getAmountPaidByUsername("TestUser")).thenReturn("10.0");
+  @Nested
+    class AmoutOwes {
+      @Test
+      void givenNonExistingUsername_whenGetAmountOwedIsCalled_thenReturnNotFound() throws Exception {
+          // given
+          Mockito.when(paymentService.getAmountOwedByUsername("nonExistingUser"))
+                  .thenThrow(new UserNotFoundException("nonExistingUser"));
 
-    // when and then
-    mockMvc
-        .perform(get("/amount/paid/{username}", "TestUser"))
-        .andExpect(status().is2xxSuccessful())
-        .andExpect(content().string("10.0"));
+          // when and then
+          mockMvc
+                  .perform(get("/amount/owes/{username}", "nonExistingUser"))
+                  .andExpect(status().is4xxClientError())
+                  .andExpect(content().string("No user found for nonExistingUser"));
+      }
+
+      @Test
+      void givenAnExistingUsername_whenGetAmountOwedIsCalled_thenAmountIsReturned() throws Exception {
+          // given
+          Mockito.when(paymentService.getAmountOwedByUsername("TestUser")).thenReturn("10.0");
+
+          // when and then
+          mockMvc
+                  .perform(get("/amount/owes/{username}", "TestUser"))
+                  .andExpect(status().is2xxSuccessful())
+                  .andExpect(content().string("10.0"));
+      }
   }
 }

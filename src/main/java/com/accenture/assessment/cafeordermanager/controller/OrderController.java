@@ -24,13 +24,31 @@ public class OrderController {
    *
    * @param username - name of the user for which the amount needs to be calculated
    * @return {@code ResponseEntity} returns the total amount paid by a user if found else returns
-   *     not found error
+   *     user not found error
    */
   @GetMapping("/paid/{username}")
   public ResponseEntity<String> getAmountPaid(@PathVariable final String username) {
     String response;
     try {
       response = paymentService.getAmountPaidByUsername(username);
+      return new ResponseEntity<>(response, HttpStatus.OK);
+    } catch (UserNotFoundException e) {
+      log.error(e.getMessage());
+      return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+    }
+  }
+  /**
+   * Gets the total amount owed by a user
+   *
+   * @param username - name of the user for which the amount needs to be calculated
+   * @return {@code ResponseEntity} returns the total amount owed by a user if found else returns
+   *     user not found error
+   */
+  @GetMapping("/owes/{username}")
+  public ResponseEntity<String> getAmountOwedByUser(@PathVariable final String username) {
+    String response;
+    try {
+      response = paymentService.getAmountOwedByUsername(username);
       return new ResponseEntity<>(response, HttpStatus.OK);
     } catch (UserNotFoundException e) {
       log.error(e.getMessage());
